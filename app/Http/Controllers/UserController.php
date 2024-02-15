@@ -103,10 +103,10 @@ class UserController extends Controller
 
         $ValidarDatosUsuario = $request-> validate([
             'nombre' =>   'required|min:3|max:20',
-            'precio' => 'required|integer',
+            'precio' => 'required|integer|max:100000|min:1',
             'cantidad' => 'required|integer|min:10|max:22',
             'fecha' => 'required|date_format:"Y-m-d H:i:s"|after_or_equal:now',
-            'lugar' => 'required|string|max:255',
+            'lugar' => 'required|string|min:3|max:25',
             'nota' => 'string|max:255',
         ]);
 
@@ -143,6 +143,31 @@ class UserController extends Controller
         }
         catch (Throwable $th) {
             $this->rollbackearTablas();
+            return response(['message' => 'Something Went Wrong'],404);
+        }
+    }
+
+    public function listarPartidoCreado(Request $request, $IdPartido){
+        try {
+            $Partidos = DB::select("SELECT p.*, COUNT(j.id) as asistentes FROM partidos p LEFT JOIN jugadores j ON p.id = j.id_partido WHERE
+                                p.id = :id_usuario GROUP BY p.id", ['id_usuario' => $IdPartido]);
+
+
+            if(!$Partidos)
+                return response(['message' => 'Not Found'], 404);
+
+            return $Partidos;
+        }
+        catch (QueryException $th) {
+            return response(['message' => 'Something Went Wrong'],404);
+        }
+        catch (PDOException $th) {
+            return response(['message' => 'Something Went Wrong'],500);
+        }
+        catch (RuntimeException $th) {
+            return response(['message' => 'Not Found'],404);
+        }
+        catch (Throwable $th) {
             return response(['message' => 'Something Went Wrong'],404);
         }
     }
